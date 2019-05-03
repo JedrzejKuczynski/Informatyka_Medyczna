@@ -49,10 +49,10 @@ features = {}  # Słownik przechowujący wszystkie liście i ich cechy
 threshold = 0.7  # Granica do progowania obrazu
 
 for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
-    species = root.split(os.sep)[-1]  # Nazwa gatunku znajduje się zawsze na końcu
+    species = root.split(os.sep)[-1]  # Nazwa gatunku zawsze na końcu
     index = 0
     if species != "leafsnap-subset1":
-        features[species] = [] # Gatunek --> lista krotek z cechami kolejnych lisci
+        features[species] = []  # Gatunek --> lista krotek z cechami kolejnych liści
         leaves_dict[species] = []  # Gatunek --> lista wyciętych liści
     for name in files:
         filepath = os.path.join(root, name)
@@ -60,8 +60,7 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
         region_props = measure.regionprops(img_labelled)  # Regiony
         width = len(img_labelled[0, :])  # Szerokość danego zdjęcia w pikselach
         height = len(img_labelled[:, 0])  # Wysokość danego zdjęcia w pikselach
-        objects_found = []  # Lista przechowująca potencjalne liście
-        images_found = []  # Lista przechowująca obrazy potencjalnych liści
+        images_found = []  # Lista przechowująca potencjalne liście
 
         for region in region_props:
             bound_box = region.bbox  # Bounding box regionu
@@ -70,22 +69,24 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
                     if region.area >= 4000:
                         # Jezeli znaleziono obiekt w miarę na środku
                         # i o odpowiedniej wielkości
-
-                        images_found.append(region.image)  # Dodaj go na listę
-                        objects_found.append(region)
+                        images_found.append(region)  # Dodaj go na listę
 
         # 2 zdjęcia w Carya glabra i 2 w Cornus florida odmiawiały współpracy
         # dlatego istnieje poniższy if
 
         if len(images_found) == 1:  # Jeżeli znaleziono tylko 1 taki obiekt
-            leaves_dict[species].append(images_found[0])
+            # DO KASI: TU BYM ZAPISAŁ SPADOWANY LIŚĆ. PYTANIE CZY PO CLOSING?
+            leaves_dict[species].append(images_found[0].image)
 
             # Ekstrakcja chech z liscia
-            leaf = objects_found[0]
+            leaf = images_found[0]
             leaf_img = np.pad(leaf.image, 1, 'constant', constant_values=0)
 
-            leaf_img_closed = morphology.binary_closing(leaf.image, morphology.disk(5))
-            leaf_img_closed = np.pad(leaf_img_closed, 1, 'constant', constant_values=0)
+            leaf_img_closed = morphology.binary_closing(leaf.image,
+                                                        morphology.disk(5))
+
+            leaf_img_closed = np.pad(leaf_img_closed, 1, 'constant',
+                                     constant_values=0)
 
             # 1. Pole powierzchni
             area = leaf.area
@@ -93,16 +94,16 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
             # 2. Pole powierzchni do długości konturu
             contours = measure.find_contours(leaf_img_closed, 0.8)
 
-            # fig, ax = plt.subplots()
-            # ax.imshow(leaf_img, interpolation='nearest', cmap=plt.cm.gray)
+            fig, ax = plt.subplots()
+            ax.imshow(leaf_img, interpolation='nearest', cmap=plt.cm.gray)
 
-            # for n, contour in enumerate(contours):
-               # ax.plot(contour[:, 1], contour[:, 0], linewidth=2)
+            for n, contour in enumerate(contours):
+                ax.plot(contour[:, 1], contour[:, 0], linewidth=2)
 
-            # ax.axis('image')
-            # ax.set_xticks([])
-            # ax.set_yticks([])
-            # plt.show()
+            ax.axis('image')
+            ax.set_xticks([])
+            ax.set_yticks([])
+            plt.show()
             longest = 0
 
             if len(contours) > 1:
@@ -112,11 +113,10 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
             else:
                 longest = len(contours[0])
 
-
             # Podsumowanie znalezionych cech
             print(species, index, area, round(area/longest, 5))
 
-        index = index + 1  # Zwiekszanie numeru kolejnych lisci w obrebie gatunku
+        index += 1  # Zwiekszanie numeru kolejnych lisci w obrebie gatunku
 
 
 # Lista z maskami do erozji wykorzystywanej w znajdowaniu składowych liści
