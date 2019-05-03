@@ -42,6 +42,45 @@ def contour_and_histogram(leaves, list_of_angles=[]):
             plt.show()
     return
 
+# ------------- Kasiowa sekcja -----------------
+
+
+def calculate_area(leaf):
+    return leaf.area
+
+
+def calculate_contour(leaf_img_closed):
+    contours = measure.find_contours(leaf_img_closed, 0.8)
+    longest = 0
+
+    if len(contours) > 1:
+        for contour in contours:
+            if len(contour) > longest:
+                longest_len = len(contour)
+                longest_points = contour
+    else:
+        longest_len = len(contours[0])
+        longest_points = contours[0]
+
+    return longest_len, longest_points
+
+
+def draw_contour(image, contours):
+    fig, ax = plt.subplots()
+    ax.imshow(leaf_img, interpolation='nearest', cmap=plt.cm.gray)
+
+    for n, contour in enumerate(contours):
+        ax.plot(contour[:, 1], contour[:, 0], linewidth=2)
+
+    ax.axis('image')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    plt.show()
+
+
+def calculate_area_to_contour(area, contour):
+    return round(area/contour, 5)
+
 
 leaves_dict = {}  # Słownik przechowujący wycięte liście
 features = {}  # Słownik przechowujący wszystkie liście i ich cechy
@@ -76,6 +115,7 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
 
         if len(images_found) == 1:  # Jeżeli znaleziono tylko 1 taki obiekt
             # DO KASI: TU BYM ZAPISAŁ SPADOWANY LIŚĆ. PYTANIE CZY PO CLOSING?
+            # DO JJ: ale nam on zbędny. mi on zbędny, wiec sobie zapisz co tylko chcesz
             leaves_dict[species].append(images_found[0].image)
 
             # Ekstrakcja chech z liscia
@@ -89,32 +129,14 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
                                      constant_values=0)
 
             # 1. Pole powierzchni
-            area = leaf.area
+            area = calculate_area(leaf)
 
             # 2. Pole powierzchni do długości konturu
-            contours = measure.find_contours(leaf_img_closed, 0.8)
-
-            fig, ax = plt.subplots()
-            ax.imshow(leaf_img, interpolation='nearest', cmap=plt.cm.gray)
-
-            for n, contour in enumerate(contours):
-                ax.plot(contour[:, 1], contour[:, 0], linewidth=2)
-
-            ax.axis('image')
-            ax.set_xticks([])
-            ax.set_yticks([])
-            plt.show()
-            longest = 0
-
-            if len(contours) > 1:
-                for contour in contours:
-                    if len(contour) > longest:
-                        longest = len(contour)
-            else:
-                longest = len(contours[0])
+            contour_len, contour_points = calculate_contour(leaf_img_closed)
+            area_to_contour = calculate_area_to_contour(area, contour_len)
 
             # Podsumowanie znalezionych cech
-            print(species, index, area, round(area/longest, 5))
+            print(species, index, area, area_to_contour)
 
         index += 1  # Zwiekszanie numeru kolejnych lisci w obrebie gatunku
 
