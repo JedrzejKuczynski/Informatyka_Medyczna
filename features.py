@@ -82,6 +82,13 @@ def calculate_area_to_contour(area, contour):
     return round(area/contour, 5)
 
 
+def calculate_tail(leaf_img_closed):
+    leaf_opened = morphology.binary_opening(leaf_img_closed, morphology.disk(3))
+    tail = np.bitwise_xor(leaf_img_closed, leaf_opened)
+    return np.sum(morphology.binary_opening(tail))
+
+
+
 leaves_dict = {}  # Słownik przechowujący wycięte liście
 features = {}  # Słownik przechowujący wszystkie liście i ich cechy
 # Klucz to gatunek, wartość to lista krotek o postaci (id, pole, ... )
@@ -90,6 +97,8 @@ threshold = 0.7  # Granica do progowania obrazu
 for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
     species = root.split(os.sep)[-1]  # Nazwa gatunku zawsze na końcu
     index = 0
+    if species == "acer_campestre":
+        continue
     if species != "leafsnap-subset1":
         features[species] = []  # Gatunek --> lista krotek z cechami kolejnych liści
         leaves_dict[species] = []  # Gatunek --> lista wyciętych liści
@@ -135,8 +144,12 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
             contour_len, contour_points = calculate_contour(leaf_img_closed)
             area_to_contour = calculate_area_to_contour(area, contour_len)
 
+            # 3. Długość ogonka
+            tail = calculate_tail(leaf_img_closed)
+
             # Podsumowanie znalezionych cech
-            print(species, index, area, area_to_contour)
+            print(species, index, area, area_to_contour, tail)
+            features[species].append((index, area, area_to_contour, tail))
 
         index += 1  # Zwiekszanie numeru kolejnych lisci w obrebie gatunku
 
@@ -147,3 +160,4 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
 disk_masks = [morphology.disk(5), morphology.disk(10), morphology.disk(15)]
 # subleaves_dict = subleaves(leaves_dict, disk_masks)
 # contour_and_histogram(leaves_dict)
+
