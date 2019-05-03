@@ -84,27 +84,37 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
             leaf = objects_found[0]
             leaf_img = np.pad(leaf.image, 1, 'constant', constant_values=0)
 
-            leaf_img_closed = morphology.binary_closing(leaf.image, morphology.disk(2))
+            leaf_img_closed = morphology.binary_closing(leaf.image, morphology.disk(5))
             leaf_img_closed = np.pad(leaf_img_closed, 1, 'constant', constant_values=0)
 
             # 1. Pole powierzchni
             area = leaf.area
 
-            # 2. Długość konturu
+            # 2. Pole powierzchni do długości konturu
             contours = measure.find_contours(leaf_img_closed, 0.8)
 
-            fig, ax = plt.subplots()
-            ax.imshow(leaf_img, interpolation='nearest', cmap=plt.cm.gray)
+            # fig, ax = plt.subplots()
+            # ax.imshow(leaf_img, interpolation='nearest', cmap=plt.cm.gray)
 
-            for n, contour in enumerate(contours):
-                ax.plot(contour[:, 1], contour[:, 0], linewidth=2)
+            # for n, contour in enumerate(contours):
+               # ax.plot(contour[:, 1], contour[:, 0], linewidth=2)
 
-            ax.axis('image')
-            ax.set_xticks([])
-            ax.set_yticks([])
-            plt.show()
+            # ax.axis('image')
+            # ax.set_xticks([])
+            # ax.set_yticks([])
+            # plt.show()
+            longest = 0
 
-            print(species, index, area, len(contours))
+            if len(contours) > 1:
+                for contour in contours:
+                    if len(contour) > longest:
+                        longest = len(contour)
+            else:
+                longest = len(contours[0])
+
+
+            # Podsumowanie znalezionych cech
+            print(species, index, area, round(area/longest, 5))
 
         index = index + 1  # Zwiekszanie numeru kolejnych lisci w obrebie gatunku
 
@@ -115,5 +125,3 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
 disk_masks = [morphology.disk(5), morphology.disk(10), morphology.disk(15)]
 # subleaves_dict = subleaves(leaves_dict, disk_masks)
 # contour_and_histogram(leaves_dict)
-
-print(leaves_dict["acer_campestre"])
