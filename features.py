@@ -29,7 +29,7 @@ def subleaves(leaves, list_of_masks=[]):
     return subleaves_dict
 
 
-# TODO PONIŻSZA FUNKCJA. CO Z TYMI KONTURAMI JA SIĘ PYTAM???
+# TODO PONIŻSZA FUNKCJA. CO Z TYMI KONTURAMI JA SIĘ PYTAM??? GÓWNO <3
 
 def contour_and_histogram(leaves, list_of_angles=[]):
     for key, value in leaves.items():
@@ -44,11 +44,15 @@ def contour_and_histogram(leaves, list_of_angles=[]):
 
 
 leaves_dict = {}  # Słownik przechowujący wycięte liście
+features = {}  # Słownik przechowujący wszystkie liście i ich cechy
+# Klucz to gatunek, wartość to lista krotek o postaci (id, pole, ... )
 threshold = 0.7  # Granica do progowania obrazu
 
 for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
-    species = root.split("/")[-1]  # Nazwa gatunku znajduje się zawsze na końcu
+    species = root.split(os.sep)[-1]  # Nazwa gatunku znajduje się zawsze na końcu
+    index = 0
     if species != "leafsnap-subset1":
+        features[species] = [] # Gatunek --> lista krotek z cechami kolejnych lisci
         leaves_dict[species] = []  # Gatunek --> lista wyciętych liści
     for name in files:
         filepath = os.path.join(root, name)
@@ -57,6 +61,7 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
         width = len(img_labelled[0, :])  # Szerokość danego zdjęcia w pikselach
         height = len(img_labelled[:, 0])  # Wysokość danego zdjęcia w pikselach
         objects_found = []  # Lista przechowująca potencjalne liście
+        images_found = []  # Lista przechowująca obrazy potencjalnych liści
 
         for region in region_props:
             bound_box = region.bbox  # Bounding box regionu
@@ -66,18 +71,49 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
                         # Jezeli znaleziono obiekt w miarę na środku
                         # i o odpowiedniej wielkości
 
-                        objects_found.append(region.image)  # Dodaj go na listę
+                        images_found.append(region.image)  # Dodaj go na listę
+                        objects_found.append(region)
 
         # 2 zdjęcia w Carya glabra i 2 w Cornus florida odmiawiały współpracy
-        # dlatego istnieją poniższe dwie linijki
+        # dlatego istnieje poniższy if
 
-        if len(objects_found) == 1:  # Jeżeli znaleziono tylko 1 taki obiekt
-            leaves_dict[species].append(objects_found[0])
+        if len(images_found) == 1:  # Jeżeli znaleziono tylko 1 taki obiekt
+            leaves_dict[species].append(images_found[0])
+
+            # Ekstrakcja chech z liscia
+            leaf = objects_found[0]
+            leaf_img = np.pad(leaf.image, 1, 'constant', constant_values=0)
+
+            leaf_img_closed = morphology.binary_closing(leaf.image, morphology.disk(2))
+            leaf_img_closed = np.pad(leaf_img_closed, 1, 'constant', constant_values=0)
+
+            # 1. Pole powierzchni
+            area = leaf.area
+
+            # 2. Długość konturu
+            contours = measure.find_contours(leaf_img_closed, 0.8)
+
+            fig, ax = plt.subplots()
+            ax.imshow(leaf_img, interpolation='nearest', cmap=plt.cm.gray)
+
+            for n, contour in enumerate(contours):
+                ax.plot(contour[:, 1], contour[:, 0], linewidth=2)
+
+            ax.axis('image')
+            ax.set_xticks([])
+            ax.set_yticks([])
+            plt.show()
+
+            print(species, index, area, len(contours))
+
+        index = index + 1  # Zwiekszanie numeru kolejnych lisci w obrebie gatunku
 
 
 # Lista z maskami do erozji wykorzystywanej w znajdowaniu składowych liści
 # Empirycznie sprawdzono, że trzy maski w zupełności wystarczą
 
 disk_masks = [morphology.disk(5), morphology.disk(10), morphology.disk(15)]
-subleaves_dict = subleaves(leaves_dict, disk_masks)
-contour_and_histogram(leaves_dict)
+# subleaves_dict = subleaves(leaves_dict, disk_masks)
+# contour_and_histogram(leaves_dict)
+
+print(leaves_dict["acer_campestre"])
