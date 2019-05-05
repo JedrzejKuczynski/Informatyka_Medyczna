@@ -12,37 +12,20 @@ def threshold_and_label(file, threshold):
     return labels
 
 
-def subleaves(leaves, list_of_masks=[]):
-    subleaves_dict = {}  # Zwracany słownik: gatunek --> 3-elementowa lista
-    for key, value in leaves.items():
-        subleaves_dict[key] = []  # Dla każdego gatunku
-        for img in value:  # Dla każdego zdjęcia
-            subleaves = []  # Lista przechowująca liczbę znalezionych podliści
-            for mask in list_of_masks:  # Dla każdej maski
-                # Erozja --> Etykiety --> Regiony --> Liczba regionów
-                eroded_img = morphology.binary_erosion(img, mask)
-                eroded_img_labelled = measure.label(eroded_img)
-                eroded_img_regions = measure.regionprops(eroded_img_labelled)
-                subleaves_number = len(eroded_img_regions)
-                subleaves.append(subleaves_number)  # I dodajemy
-            subleaves_dict[key].append(subleaves)  # I na końcu do słownika
-    return subleaves_dict
+def subleaves(leaf_img, mask):
+    eroded_img = morphology.binary_erosion(leaf_img, mask)  # Erozja
+    eroded_img_labelled = measure.label(eroded_img)  # Etykietowanie
+    eroded_img_regions = measure.regionprops(eroded_img_labelled)  # Regiony
+    subleaves_number = len(eroded_img_regions)  # Liczba regionów
+    return subleaves_number
 
 
-# TODO PONIŻSZA FUNKCJA. CO Z TYMI KONTURAMI JA SIĘ PYTAM??? GÓWNO <3
-
-def contour_and_histogram(leaves, list_of_angles=[]):
-    for key, value in leaves.items():
-        for img in value:
-            contours = measure.find_contours(img, 0.7)
-            io.imshow(img)
-            for i, contour in enumerate(contours):
-                if len(contour) > 50:
-                    pass
-            plt.show()
+# Contour_length???
+def contour_histogram(contour_points, list_of_angles=[]):
+    draw_contour(leaf_img_closed, contour_points)
     return
 
-# ------------- Kasiowa sekcja -----------------
+# ------------- Kasiowa sekcja ----------------- #
 
 
 def calculate_area(leaf):
@@ -56,25 +39,18 @@ def calculate_contour(leaf_img_closed):
     if len(contours) > 1:
         for contour in contours:
             if len(contour) > longest:
-                longest_len = len(contour)
+                longest = len(contour)
                 longest_points = contour
     else:
-        longest_len = len(contours[0])
+        longest = len(contours[0])
         longest_points = contours[0]
 
-    return longest_len, longest_points
+    return longest, longest_points
 
 
-def draw_contour(image, contours):
-    fig, ax = plt.subplots()
-    ax.imshow(leaf_img, interpolation='nearest', cmap=plt.cm.gray)
-
-    for n, contour in enumerate(contours):
-        ax.plot(contour[:, 1], contour[:, 0], linewidth=2)
-
-    ax.axis('image')
-    ax.set_xticks([])
-    ax.set_yticks([])
+def draw_contour(leaf_img, contour):
+    io.imshow(leaf_img, interpolation='nearest', cmap=plt.cm.gray)
+    plt.plot(contour[:, 1], contour[:, 0], linewidth=2)
     plt.show()
 
 
@@ -83,25 +59,22 @@ def calculate_area_to_contour(area, contour):
 
 
 def calculate_tail(leaf_img_closed):
-    leaf_opened = morphology.binary_opening(leaf_img_closed, morphology.disk(3))
-    tail = np.bitwise_xor(leaf_img_closed, leaf_opened)
+    leaf_open = morphology.binary_opening(leaf_img_closed, morphology.disk(3))
+    tail = np.bitwise_xor(leaf_img_closed, leaf_open)
     return np.sum(morphology.binary_opening(tail))
 
 
-
-leaves_dict = {}  # Słownik przechowujący wycięte liście
-features = {}  # Słownik przechowujący wszystkie liście i ich cechy
+# Słownik przechowujący wszystkie liście i ich cechy
 # Klucz to gatunek, wartość to lista krotek o postaci (id, pole, ... )
+features = {}
 threshold = 0.7  # Granica do progowania obrazu
 
 for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
     species = root.split(os.sep)[-1]  # Nazwa gatunku zawsze na końcu
     index = 0
-    if species == "acer_campestre":
-        continue
     if species != "leafsnap-subset1":
-        features[species] = []  # Gatunek --> lista krotek z cechami kolejnych liści
-        leaves_dict[species] = []  # Gatunek --> lista wyciętych liści
+        # Gatunek --> lista krotek z cechami kolejnych liści
+        features[species] = []
     for name in files:
         filepath = os.path.join(root, name)
         img_labelled = threshold_and_label(filepath, threshold)
@@ -123,9 +96,6 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
         # dlatego istnieje poniższy if
 
         if len(images_found) == 1:  # Jeżeli znaleziono tylko 1 taki obiekt
-            # DO KASI: TU BYM ZAPISAŁ SPADOWANY LIŚĆ. PYTANIE CZY PO CLOSING?
-            # DO JJ: ale nam on zbędny. mi on zbędny, wiec sobie zapisz co tylko chcesz
-            leaves_dict[species].append(images_found[0].image)
 
             # Ekstrakcja chech z liscia
             leaf = images_found[0]
@@ -147,17 +117,15 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
             # 3. Długość ogonka
             tail = calculate_tail(leaf_img_closed)
 
+            # 4. Liczba podlistków
+            disk10_mask = morphology.disk(10)  # Dyskowa maska o promieniu 10
+            subleaves_dict = subleaves(leaf_img, disk10_mask)
+
+            # 5. Ząbkowatość
+            histogram = contour_histogram(contour_points)
+
             # Podsumowanie znalezionych cech
-            print(species, index, area, area_to_contour, tail)
-            features[species].append((index, area, area_to_contour, tail))
+            # print(species, index, area, area_to_contour, tail)
+            # features[species].append((index, area, area_to_contour, tail))
 
         index += 1  # Zwiekszanie numeru kolejnych lisci w obrebie gatunku
-
-
-# Lista z maskami do erozji wykorzystywanej w znajdowaniu składowych liści
-# Empirycznie sprawdzono, że trzy maski w zupełności wystarczą
-
-disk_masks = [morphology.disk(5), morphology.disk(10), morphology.disk(15)]
-# subleaves_dict = subleaves(leaves_dict, disk_masks)
-# contour_and_histogram(leaves_dict)
-
