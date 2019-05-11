@@ -20,10 +20,56 @@ def subleaves(leaf_img, mask):
     return subleaves_number
 
 
-# Contour_length???
-def contour_histogram(contour_points, list_of_angles=[]):
-    draw_contour(leaf_img_closed, contour_points)
-    return
+def contour_histogram(contour_points, list_of_angles):
+    hist_data = []  # Dane do histogramu --> wszystkie kąty razem
+    for angle in list_of_angles:
+        angles_in_degrees = []  # Lista przechowująca aktualne kąty
+        contour_beginning = contour_points[:angle, :]  # Odpowiedni początek
+        contour_end = contour_points[-angle:, :]  # Odpowiedni koniec
+        # I robimy kółeczko
+        contour_hist = np.insert(contour_points, 0, contour_end, axis=0)
+        contour_hist = np.append(contour_hist, contour_beginning, axis=0)
+        for i in range(angle, len(contour_hist) - angle):
+            middle_point = contour_hist[i]  # Punkt środkowy
+            left_point = contour_hist[i-angle]  # Punkt lewy
+            right_point = contour_hist[i+angle]  # Punkt prawy
+
+            # print(left_point, middle_point, right_point)
+
+            # Wektory do obliczeń
+            middle_right = right_point - middle_point
+            middle_left = left_point - middle_point
+
+            # print(middle_right, middle_left)
+
+            # No i wzorki
+            dot_product = np.dot(middle_right, middle_left)
+            middle_right_norm = np.linalg.norm(middle_right)
+            middle_left_norm = np.linalg.norm(middle_left)
+
+            cosine = dot_product / (middle_right_norm * middle_left_norm)
+
+            # Poprawka zaokrąglenia komputerowego i te sprawy
+            if cosine < -1 or cosine > 1:
+                cosine = np.round(cosine, 0)
+
+            # Przerabiamy na kąt
+            points_angle = np.arccos(cosine)
+            points_angle = np.degrees(points_angle)
+            points_angle = np.round(points_angle, 0)
+
+            angles_in_degrees.append(points_angle)  # Dodajemy do aktualnej
+
+        hist_data.append(angles_in_degrees)  # Dodajemy do wspólnej
+
+    hist_data = np.concatenate(hist_data)  # Łączymy wspólną
+    histogram = np.histogram(hist_data, bins=20)  # Liczymy histogram
+
+    # plt.hist(hist_data, bins=20)
+    # plt.show()
+    # draw_contour(leaf_img_closed, contour_points)
+
+    return histogram
 
 # ------------- Kasiowa sekcja ----------------- #
 
@@ -122,7 +168,8 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
             subleaves_dict = subleaves(leaf_img, disk10_mask)
 
             # 5. Ząbkowatość
-            histogram = contour_histogram(contour_points)
+            angles = [3, 5, 10, 15, 30, 50]
+            histogram = contour_histogram(contour_points, angles)
 
             # Podsumowanie znalezionych cech
             # print(species, index, area, area_to_contour, tail)
