@@ -5,9 +5,6 @@ import os
 from skimage import color, io, measure, morphology
 
 
-# ------------- Jędrzejowa sekcja ----------------- #
-
-
 parser = argparse.ArgumentParser(description="Skrypt obliczający \
 cechy (pole powierzchni, obwód, liczbę podlistków itp.) z obrazu liścia, \
 które będą wykorzystywane w uczeniu modelu.")
@@ -82,9 +79,6 @@ def contour_histogram(contour_points, list_of_angles):
     return histogram
 
 
-# ------------- Kasiowa sekcja ----------------- #
-
-
 def calculate_area(leaf):
     return leaf.area
 
@@ -93,16 +87,26 @@ def calculate_contour(leaf_img_closed):
     contours = measure.find_contours(leaf_img_closed, 0.8)
     longest = 0
 
-    if len(contours) > 1:
+    if len(contours) > 1: # Jesli wykryto wiecej niz 1 kontur to szukamy tego najdluzszego
         for contour in contours:
             if len(contour) > longest:
                 longest = len(contour)
                 longest_points = contour
-    else:
+    else: 
         longest = len(contours[0])
         longest_points = contours[0]
 
     return longest, longest_points
+
+
+def calculate_area_to_contour(area, contour):
+    return round(area/contour, 5)
+
+
+def calculate_tail(leaf_img_closed):
+    leaf_opened = morphology.binary_opening(leaf_img_closed, morphology.disk(4))
+    tail = np.bitwise_xor(leaf_img_closed, leaf_opened) # Odejmowanie obrazu z ogonkiem i bez ogonka
+    return np.sum(morphology.binary_opening(tail))
 
 
 def draw_contour(leaf_img, contour):
@@ -111,21 +115,9 @@ def draw_contour(leaf_img, contour):
     plt.show()
 
 
-def calculate_area_to_contour(area, contour):
-    return round(area/contour, 5)
-
-
-def calculate_tail(leaf_img_closed):
-    leaf_open = morphology.binary_opening(leaf_img_closed, morphology.disk(3))
-    tail = np.bitwise_xor(leaf_img_closed, leaf_open)
-    return np.sum(morphology.binary_opening(tail))
-
-
-# ------------- Wspólna sekcja ----------------- #
-
 
 # Słownik przechowujący wszystkie liście i ich cechy
-# Klucz to gatunek, wartość to lista krotek o postaci (id, pole, ... )
+# Klucz to gatunek, wartość to lista krotek o postaci (pole, ... )
 features_all = {}
 threshold = 0.7  # Granica do progowania obrazu
 
@@ -133,6 +125,8 @@ for root, dirs, files in os.walk(args.path, topdown=False):
     species = root.split(os.sep)[-1]  # Nazwa gatunku zawsze na końcu
     if species and species != "leafsnap-subset1":
         features_all[species] = []
+
+    
     for name in files:
         filepath = os.path.join(root, name)
         img_labelled = threshold_and_label(filepath, threshold)
@@ -182,6 +176,7 @@ for root, dirs, files in os.walk(args.path, topdown=False):
 
             features_species = [area, area_to_contour, tail,
                                 subleaves_number, histogram]
+            print(features_species)
             features_all[species].append(features_species)
 
 np.savez(args.outfile, **features_all)
