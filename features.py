@@ -4,43 +4,44 @@ import os
 from skimage import color, io, measure, morphology
 
 
+# ------------- Jędrzejowa sekcja ----------------- #
+
+
 def threshold_and_label(file, threshold):
-    img = io.imread(file)  # Wczytanie zdjęcia
-    img_gray = color.rgb2gray(img)  # Przekonwertowanie na monochromatyczny
-    mask = (img_gray < threshold)  # Progowanie
-    labels = measure.label(mask)  # Etykietowanie
+    img = io.imread(file)
+    img_gray = color.rgb2gray(img)
+    mask = (img_gray < threshold)
+    labels = measure.label(mask)
     return labels
 
 
 def subleaves(leaf_img, mask):
-    eroded_img = morphology.binary_erosion(leaf_img, mask)  # Erozja
-    eroded_img_labelled = measure.label(eroded_img)  # Etykietowanie
-    eroded_img_regions = measure.regionprops(eroded_img_labelled)  # Regiony
-    subleaves_number = len(eroded_img_regions)  # Liczba regionów
+    eroded_img = morphology.binary_erosion(leaf_img, mask)
+    eroded_img_labelled = measure.label(eroded_img)
+    eroded_img_regions = measure.regionprops(eroded_img_labelled)
+    subleaves_number = len(eroded_img_regions)
     return subleaves_number
 
 
 def contour_histogram(contour_points, list_of_angles):
-    hist_data = []  # Dane do histogramu --> wszystkie kąty razem
+    hist_data = []
     for angle in list_of_angles:
-        angles_in_degrees = []  # Lista przechowująca aktualne kąty
-        contour_beginning = contour_points[:angle, :]  # Odpowiedni początek
-        contour_end = contour_points[-angle:, :]  # Odpowiedni koniec
+        angles_in_degrees = []
+        contour_beginning = contour_points[:angle, :]
+        contour_end = contour_points[-angle:, :]
+
         # I robimy kółeczko
         contour_hist = np.insert(contour_points, 0, contour_end, axis=0)
         contour_hist = np.append(contour_hist, contour_beginning, axis=0)
-        for i in range(angle, len(contour_hist) - angle):
-            middle_point = contour_hist[i]  # Punkt środkowy
-            left_point = contour_hist[i-angle]  # Punkt lewy
-            right_point = contour_hist[i+angle]  # Punkt prawy
 
-            # print(left_point, middle_point, right_point)
+        for i in range(angle, len(contour_hist) - angle):
+            middle_point = contour_hist[i]
+            left_point = contour_hist[i-angle]
+            right_point = contour_hist[i+angle]
 
             # Wektory do obliczeń
             middle_right = right_point - middle_point
             middle_left = left_point - middle_point
-
-            # print(middle_right, middle_left)
 
             # No i wzorki
             dot_product = np.dot(middle_right, middle_left)
@@ -53,23 +54,23 @@ def contour_histogram(contour_points, list_of_angles):
             if cosine < -1 or cosine > 1:
                 cosine = np.round(cosine, 0)
 
-            # Przerabiamy na kąt
             points_angle = np.arccos(cosine)
             points_angle = np.degrees(points_angle)
             points_angle = np.round(points_angle, 0)
 
-            angles_in_degrees.append(points_angle)  # Dodajemy do aktualnej
+            angles_in_degrees.append(points_angle)
 
-        hist_data.append(angles_in_degrees)  # Dodajemy do wspólnej
+        hist_data.append(angles_in_degrees)
 
-    hist_data = np.concatenate(hist_data)  # Łączymy wspólną
-    histogram = np.histogram(hist_data, bins=20)  # Liczymy histogram
+    hist_data = np.concatenate(hist_data)
+    histogram = np.histogram(hist_data, bins=20)
 
     # plt.hist(hist_data, bins=20)
     # plt.show()
     # draw_contour(leaf_img_closed, contour_points)
 
     return histogram
+
 
 # ------------- Kasiowa sekcja ----------------- #
 
@@ -110,6 +111,9 @@ def calculate_tail(leaf_img_closed):
     return np.sum(morphology.binary_opening(tail))
 
 
+# ------------- Wspólna sekcja ----------------- #
+
+
 # Słownik przechowujący wszystkie liście i ich cechy
 # Klucz to gatunek, wartość to lista krotek o postaci (id, pole, ... )
 features = {}
@@ -119,31 +123,27 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
     species = root.split(os.sep)[-1]  # Nazwa gatunku zawsze na końcu
     index = 0
     if species != "leafsnap-subset1":
-        # Gatunek --> lista krotek z cechami kolejnych liści
         features[species] = []
     for name in files:
         filepath = os.path.join(root, name)
         img_labelled = threshold_and_label(filepath, threshold)
-        region_props = measure.regionprops(img_labelled)  # Regiony
-        width = len(img_labelled[0, :])  # Szerokość danego zdjęcia w pikselach
-        height = len(img_labelled[:, 0])  # Wysokość danego zdjęcia w pikselach
-        images_found = []  # Lista przechowująca potencjalne liście
+        region_props = measure.regionprops(img_labelled)
+        width = len(img_labelled[0, :])
+        height = len(img_labelled[:, 0])
+        images_found = []
 
         for region in region_props:
-            bound_box = region.bbox  # Bounding box regionu
+            bound_box = region.bbox
             if bound_box[2] < 0.88 * height and bound_box[3] < 0.88 * width:
                 if bound_box[0] < 0.6 * height and bound_box[1] < 0.6 * width:
                     if region.area >= 4000:
-                        # Jezeli znaleziono obiekt w miarę na środku
-                        # i o odpowiedniej wielkości
-                        images_found.append(region)  # Dodaj go na listę
+                        images_found.append(region)
 
         # 2 zdjęcia w Carya glabra i 2 w Cornus florida odmiawiały współpracy
         # dlatego istnieje poniższy if
 
-        if len(images_found) == 1:  # Jeżeli znaleziono tylko 1 taki obiekt
+        if len(images_found) == 1:
 
-            # Ekstrakcja chech z liscia
             leaf = images_found[0]
             leaf_img = np.pad(leaf.image, 1, 'constant', constant_values=0)
 
@@ -164,14 +164,13 @@ for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
             tail = calculate_tail(leaf_img_closed)
 
             # 4. Liczba podlistków
-            disk10_mask = morphology.disk(10)  # Dyskowa maska o promieniu 10
+            disk10_mask = morphology.disk(10)
             subleaves_dict = subleaves(leaf_img, disk10_mask)
 
             # 5. Ząbkowatość
             angles = [3, 5, 10, 15, 30, 50]
             histogram = contour_histogram(contour_points, angles)
 
-            # Podsumowanie znalezionych cech
             # print(species, index, area, area_to_contour, tail)
             # features[species].append((index, area, area_to_contour, tail))
 
