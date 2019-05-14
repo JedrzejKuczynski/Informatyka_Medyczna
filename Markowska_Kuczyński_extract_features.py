@@ -176,7 +176,7 @@ for root, dirs, files in os.walk(args.path, topdown=False):
 
             features_species = [area, area_to_contour, tail,
                                 subleaves_number, histogram]
-            print(features_species)
+            # print(features_species)
             features_all[species].append(features_species)
 
 np.savez(args.outfile, **features_all)
