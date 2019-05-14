@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(description="Skrypt obliczający \
 cechy (pole powierzchni, obwód, liczbę podlistków itp.) z obrazu liścia, \
 które będą wykorzystywane w uczeniu modelu.")
 parser.add_argument("path", help="Ścieżka do katalogu z bazą obrazków")
-parser.add_argument("oufile", help="Plik zawierający wyliczone cechy oraz \
+parser.add_argument("outfile", help="Plik zawierający wyliczone cechy oraz \
 nazwę klasy dla wszystkich obrazków z bazy")
 args = parser.parse_args()
 
@@ -126,14 +126,13 @@ def calculate_tail(leaf_img_closed):
 
 # Słownik przechowujący wszystkie liście i ich cechy
 # Klucz to gatunek, wartość to lista krotek o postaci (id, pole, ... )
-features = {}
+features_all = {}
 threshold = 0.7  # Granica do progowania obrazu
 
 for root, dirs, files in os.walk(args.path, topdown=False):
     species = root.split(os.sep)[-1]  # Nazwa gatunku zawsze na końcu
-    index = 0
-    if species != "leafsnap-subset1":
-        features[species] = []
+    if species and species != "leafsnap-subset1":
+        features_all[species] = []
     for name in files:
         filepath = os.path.join(root, name)
         img_labelled = threshold_and_label(filepath, threshold)
@@ -175,13 +174,14 @@ for root, dirs, files in os.walk(args.path, topdown=False):
 
             # 4. Liczba podlistków
             disk10_mask = morphology.disk(10)
-            subleaves_dict = subleaves(leaf_img, disk10_mask)
+            subleaves_number = subleaves(leaf_img, disk10_mask)
 
             # 5. Ząbkowatość
             angles = [3, 5, 10, 15, 30, 50]
             histogram = contour_histogram(contour_points, angles)
 
-            # print(species, index, area, area_to_contour, tail)
-            # features[species].append((index, area, area_to_contour, tail))
+            features_species = [area, area_to_contour, tail,
+                                subleaves_number, histogram]
+            features_all[species].append(features_species)
 
-        index += 1  # Zwiekszanie numeru kolejnych lisci w obrebie gatunku
+np.savez(args.outfile, **features_all)
