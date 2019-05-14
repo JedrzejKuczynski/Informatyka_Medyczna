@@ -1,3 +1,4 @@
+import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -5,6 +6,15 @@ from skimage import color, io, measure, morphology
 
 
 # ------------- Jędrzejowa sekcja ----------------- #
+
+
+parser = argparse.ArgumentParser(description="Skrypt obliczający \
+cechy (pole powierzchni, obwód, liczbę podlistków itp.) z obrazu liścia, \
+które będą wykorzystywane w uczeniu modelu.")
+parser.add_argument("path", help="Ścieżka do katalogu z bazą obrazków")
+parser.add_argument("oufile", help="Plik zawierający wyliczone cechy oraz \
+nazwę klasy dla wszystkich obrazków z bazy")
+args = parser.parse_args()
 
 
 def threshold_and_label(file, threshold):
@@ -119,7 +129,7 @@ def calculate_tail(leaf_img_closed):
 features = {}
 threshold = 0.7  # Granica do progowania obrazu
 
-for root, dirs, files in os.walk("./leafsnap-subset1", topdown=False):
+for root, dirs, files in os.walk(args.path, topdown=False):
     species = root.split(os.sep)[-1]  # Nazwa gatunku zawsze na końcu
     index = 0
     if species != "leafsnap-subset1":
