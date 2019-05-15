@@ -92,7 +92,7 @@ def calculate_contour(leaf_img_closed):
             if len(contour) > longest:
                 longest = len(contour)
                 longest_points = contour
-    else: 
+    else:
         longest = len(contours[0])
         longest_points = contours[0]
 
@@ -107,6 +107,10 @@ def calculate_tail(leaf_img_closed):
     leaf_opened = morphology.binary_opening(leaf_img_closed, morphology.disk(4))
     tail = np.bitwise_xor(leaf_img_closed, leaf_opened) # Odejmowanie obrazu z ogonkiem i bez ogonka
     return np.sum(morphology.binary_opening(tail))
+
+
+def calculate_hu(leaf):
+    return leaf.moments_hu
 
 
 def draw_contour(leaf_img, contour):
@@ -174,9 +178,12 @@ for root, dirs, files in os.walk(args.path, topdown=False):
             angles = [3, 5, 10, 15, 30, 50]
             histogram = contour_histogram(contour_points, angles)
 
+            # 6. Momenty Hu
+            hu = calculate_hu(leaf)
+
             features_species = [area, area_to_contour, tail,
-                                subleaves_number, histogram]
-            # print(features_species)
+                                subleaves_number, histogram, hu]
+            print(features_species)
             features_all[species].append(features_species)
 
 np.savez(args.outfile, **features_all)
