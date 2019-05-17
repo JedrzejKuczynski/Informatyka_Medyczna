@@ -6,10 +6,10 @@ def load_and_prepare_data(filename):
     X = []
     y = []
 
-    for file in data.files:
-        for features in data[file]:
+    for label in data.files:
+        for features in data[label]:
             X.append(features)
-            y.append(file)
+            y.append(label)
 
     X = np.array(X)
     y = np.array(y)
