@@ -70,13 +70,13 @@ def contour_histogram(contour_points, list_of_angles):
         hist_data.append(angles_in_degrees)
 
     hist_data = np.concatenate(hist_data)
-    histogram = np.histogram(hist_data, bins=20)
+    hist, bin_edges = np.histogram(hist_data, bins=20, density=True)
 
     # plt.hist(hist_data, bins=20)
     # plt.show()
     # draw_contour(leaf_img_closed, contour_points)
 
-    return histogram
+    return hist
 
 
 def calculate_area(leaf):
@@ -87,7 +87,8 @@ def calculate_contour(leaf_img_closed):
     contours = measure.find_contours(leaf_img_closed, 0.8)
     longest = 0
 
-    if len(contours) > 1: # Jesli wykryto wiecej niz 1 kontur to szukamy tego najdluzszego
+    # Jesli wykryto wiecej niz 1 kontur to szukamy tego najdluzszego
+    if len(contours) > 1:
         for contour in contours:
             if len(contour) > longest:
                 longest = len(contour)
@@ -105,7 +106,7 @@ def calculate_area_to_contour(area, contour):
 
 def calculate_tail(leaf_img_closed):
     leaf_opened = morphology.binary_opening(leaf_img_closed, morphology.disk(4))
-    tail = np.bitwise_xor(leaf_img_closed, leaf_opened) # Odejmowanie obrazu z ogonkiem i bez ogonka
+    tail = np.bitwise_xor(leaf_img_closed, leaf_opened)  # Odejmowanie obrazu z ogonkiem i bez ogonka
     return np.sum(morphology.binary_opening(tail))
 
 
@@ -119,7 +120,6 @@ def draw_contour(leaf_img, contour):
     plt.show()
 
 
-
 # Słownik przechowujący wszystkie liście i ich cechy
 # Klucz to gatunek, wartość to lista krotek o postaci (pole, ... )
 features_all = {}
@@ -130,7 +130,6 @@ for root, dirs, files in os.walk(args.path, topdown=False):
     if species and species != "leafsnap-subset1":
         features_all[species] = []
 
-    
     for name in files:
         filepath = os.path.join(root, name)
         img_labelled = threshold_and_label(filepath, threshold)
@@ -176,14 +175,14 @@ for root, dirs, files in os.walk(args.path, topdown=False):
 
             # 5. Ząbkowatość
             angles = [3, 5, 10, 15, 30, 50]
-            histogram = contour_histogram(contour_points, angles)
+            hist = contour_histogram(contour_points, angles)
 
             # 6. Momenty Hu
             hu = calculate_hu(leaf)
 
-            features_species = [area, area_to_contour, tail,
-                                subleaves_number, histogram, hu]
-            print(features_species)
+            features_species = np.array([area, area_to_contour, tail,
+                                        subleaves_number])
+            features_species = np.concatenate((features_species, hist, hu))
             features_all[species].append(features_species)
 
 np.savez(args.outfile, **features_all)
