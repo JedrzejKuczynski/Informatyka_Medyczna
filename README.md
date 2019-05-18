@@ -1,10 +1,9 @@
-Informatyka_Medyczna
+Informatyka_Medyczna etap II
 ## JJ
-* Ząbkowatość
-* Kolor (?)
-* Ilość listków składowych (erozja te sprawy)
+* Neural Net
+* Gaussian
+* Bayes Naive
 ## Kasia
-* Długość ogonka
-* Pole powierzchni
-* Pole do obwodu
-### Nowe cechy???
+* kNN
+* Random Forest
+* SVM RBF
