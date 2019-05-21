@@ -1,12 +1,12 @@
-Informatyka_Medyczna
+Informatyka_Medyczna etap II
 ## JJ
-* Ząbkowatość
-* Kolor (?)
-* Ilość listków składowych (erozja te sprawy)
+* Neural Net
+* Gaussian
+* Bayes Naive
 ## Kasia
-* Długość ogonka
-* Pole powierzchni
-* Pole do obwodu
+* kNN
+* Random Forest
+* SVM RBF
 ### Pomysł JJa na robienie tego
 Za pomocą Pipeline i GridSearchCV. [Dokumentacja Pipeline](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html). [Dokumentacja Tuning](https://scikit-learn.org/stable/modules/grid_search.html). [Fajny przykład](https://scikit-learn.org/stable/tutorial/statistical_inference/putting_together.html)
 1. Feature selection. [Dokumentacja](https://scikit-learn.org/stable/modules/feature_selection.html)
