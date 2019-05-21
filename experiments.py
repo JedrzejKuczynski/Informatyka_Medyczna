@@ -3,15 +3,18 @@ import numpy as np
 
 def load_and_prepare_data(filename):
     data = np.load(f"{filename}.npz", allow_pickle=True)
-    X = []
-    y = []
+    features_all = []
+    targets = []
 
     for label in data.files:
         for features in data[label]:
-            X.append(features)
-            y.append(label)
+            features_all.append(features)
+            targets.append(label)
 
-    X = np.array(X)
-    y = np.array(y)
+    features_all = np.array(features_all)
+    targets = np.array(targets)
 
-    return X, y
+    return features_all, targets
+
+
+features, targets = load_and_prepare_data("test")
