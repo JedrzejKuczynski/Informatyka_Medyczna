@@ -173,7 +173,7 @@ def main_experiment(X, y, clasifiers):
 
         print(X.shape, X_selected.shape)
 
-        return
+        
 
 
 clasifiers = {
