@@ -6,6 +6,7 @@ from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import GridSearchCV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -126,7 +127,55 @@ def gaussian_process_experiments(X, y):
     return
 
 
+def kNN_experiments(X, y):  # y - zmienna zalezna, X - cechy
+    clf = KNeighborsClassifier()
+    param_grid = {
+        "weights": ['uniform', 'distance'],
+        "n_neighbors": [3, 5, 7, 10, 15, 20]
+    }
+    grid_search = GridSearchCV(clf, param_grid, scoring="accuracy",
+                               cv=3, iid=False)
+    grid_search.fit(X, y)
+
+    search_results_df = pd.DataFrame.from_dict(grid_search.cv_results_)
+    best_estimator = grid_search.best_estimator_
+    best_score = grid_search.best_score_
+    best_params = grid_search.best_params_
+
+    print(best_score, best_params)
+
+    search_results_df.to_csv("kNN_all_features.csv", index=False)
+
+
+def main_experiment(X, y, clasifiers):
+    for key, value in clasifiers.items():
+        clf = value[0]
+        param_grid = value[1]
+
+        grid_search = GridSearchCV(clf, param_grid, scoring="accuracy",
+                                   cv=3, iid=False)
+        grid_search.fit(X, y)
+
+        search_results_df = pd.DataFrame.from_dict(grid_search.cv_results_)
+        best_estimator = grid_search.best_estimator_
+        best_score = grid_search.best_score_
+        best_params = grid_search.best_params_
+
+        print(best_score, best_params)
+
+        search_results_df.to_csv(f"{key}_all_features.csv", index=False)
+
+
+clasifiers = {
+    "kNN": (KNeighborsClassifier(),
+            {"weights": ['uniform', 'distance'],
+            "n_neighbors": [3, 5, 7, 10, 15, 20]}
+            )
+}
+
 features, targets = load_and_prepare_data("test.npz")
 # neural_net_experiments(features, targets)
-naive_bayes_experiments(features, targets)
+# naive_bayes_experiments(features, targets)
 # gaussian_process_experiments(features, targets)
+
+main_experiment(features, targets, clasifiers)
