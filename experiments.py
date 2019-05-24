@@ -68,10 +68,10 @@ def main_experiment(X, y, clasifiers):
         # Feature Selection
         percentiles = [70, 50, 30]
         for percentile in percentiles:
-            X, selected = feature_selection(X, y, percentile)
+            X_new, selected = feature_selection(X, y, percentile)
             search = GridSearchCV(clf, best_params, scoring="accuracy",
                                   cv=3, iid=False)
-            search.fit(X, y)
+            search.fit(X_new, y)
             best_score = search.best_score_
             print(f"{percentile}% features")
             print(best_score, selected)
