@@ -6,7 +6,6 @@ from sklearn.gaussian_process.kernels import RBF
 from sklearn.model_selection import GridSearchCV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
-from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 
@@ -41,7 +40,7 @@ def neural_net_experiments(X, y):
         "max_iter": [100, 200, 300, 400, 500, 600, 700, 800]
         }
     grid_search = GridSearchCV(clf, param_grid, scoring="accuracy",
-                               cv=3, iid=False)
+                               cv=3, iid=False, n_jobs=-1)
     grid_search.fit(X, y)
 
     search_results_df = pd.DataFrame.from_dict(grid_search.cv_results_)
@@ -49,9 +48,11 @@ def neural_net_experiments(X, y):
     best_score = grid_search.best_score_
     best_params = grid_search.best_params_
 
-    print(best_score, best_params)
+    print("Neural Net: \n", best_score, best_params, "\n")
 
-    search_results_df.to_csv("neural_net_all_features.csv", index=False)
+    # search_results_df.to_csv("neural_net_all_features.csv", index=False)
+
+    """
 
     # Feature Selection
 
@@ -60,6 +61,8 @@ def neural_net_experiments(X, y):
     selected_features = feature_selection.get_support()
 
     print(X.shape, X_selected.shape)
+
+    """
 
     return
 
@@ -79,9 +82,11 @@ def naive_bayes_experiments(X, y):
     best_score = grid_search.best_score_
     best_params = grid_search.best_params_
 
-    print(best_score, best_params)
+    print("Bayes: \n", best_score, best_params, "\n")
 
     search_results_df.to_csv("naive_bayes_all_features.csv", index=False)
+
+    """
 
     # Feature Selection
 
@@ -90,6 +95,8 @@ def naive_bayes_experiments(X, y):
     selected_features = feature_selection.get_support()
 
     print(X.shape, X_selected.shape)
+
+    """
 
     return
 
@@ -98,12 +105,10 @@ def gaussian_process_experiments(X, y):
     kernel = 1.0 * RBF(1.0)
     clf = GaussianProcessClassifier(kernel=kernel, random_state=42)
     param_grid = {
-        "n_restarts_optimizer": [0, 1, 2, 3, 4, 5],
-        "max_iter_predict": [100, 200, 300, 400,
-                             500, 600, 700, 800]
+        "n_restarts_optimizer": [0, 1, 2, 3, 4]
     }
     grid_search = GridSearchCV(clf, param_grid, scoring="accuracy",
-                               cv=3, iid=False)
+                               cv=3, iid=False, n_jobs=-1)
     grid_search.fit(X, y)
 
     search_results_df = pd.DataFrame.from_dict(grid_search.cv_results_)
@@ -111,9 +116,11 @@ def gaussian_process_experiments(X, y):
     best_score = grid_search.best_score_
     best_params = grid_search.best_params_
 
-    print(best_score, best_params)
+    print("Gaussian Process: \n", best_score, best_params, "\n")
 
     search_results_df.to_csv("gaussian_process_all_features.csv", index=False)
+
+    """
 
     # Feature Selection
 
@@ -123,10 +130,12 @@ def gaussian_process_experiments(X, y):
 
     print(X.shape, X_selected.shape)
 
+    """
+
     return
 
 
 features, targets = load_and_prepare_data("test.npz")
-# neural_net_experiments(features, targets)
+neural_net_experiments(features, targets)
 naive_bayes_experiments(features, targets)
-# gaussian_process_experiments(features, targets)
+gaussian_process_experiments(features, targets)
