@@ -7,6 +7,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 
 
@@ -28,8 +30,19 @@ def load_and_prepare_data(filename):
     return features_all, targets
 
 
+def feature_selection(X, y, percentile):
+    feature_selection = SelectPercentile(percentile=75)
+    X_selected = feature_selection.fit_transform(X, y)
+    selected_features = feature_selection.get_support()
+
+    print(X.shape, X_selected.shape)
+    return X_selected, selected_features
+
+
 def main_experiment(X, y, clasifiers):
     for key, value in clasifiers.items():
+        # if key != "bayes":
+        #    continue
         clf = value[0]
         param_grid = value[1]
 
@@ -42,17 +55,28 @@ def main_experiment(X, y, clasifiers):
         best_score = grid_search.best_score_
         best_params = grid_search.best_params_
 
+        print("all features")
         print(best_score, best_params)
 
         search_results_df.to_csv(f"{key}_all_features.csv", index=False)
 
+        for key_param, value_param in best_params.items():
+            l = []
+            l.append(value_param)
+            best_params[key_param] = l
+
         # Feature Selection
+        percentiles = [70, 50, 30]
+        for percentile in percentiles:
+            X, selected = feature_selection(X, y, percentile)
+            search = GridSearchCV(clf, best_params, scoring="accuracy",
+                                   cv=3, iid=False)
+            search.fit(X, y)
+            best_score = search.best_score_
+            print(f"{percentile}% features")
+            print(best_score, selected)
 
-        # feature_selection = SelectPercentile(percentile=75)
-        # X_selected = feature_selection.fit_transform(X, y)
-        # selected_features = feature_selection.get_support()
-
-        # print(X.shape, X_selected.shape)
+            search_results_df.to_csv(f"{key}_{percentile}_features.csv", index=False)
 
 
 clasifiers = {
@@ -61,7 +85,18 @@ clasifiers = {
             "weights": ['uniform', 'distance'],
             "n_neighbors": [3, 5, 7, 10, 15, 20]
             }),
-    # "Random Forest": (),
+    "random_forest": (RandomForestClassifier(random_state=42),
+                      {
+                        "n_estimators": [10, 30, 50, 70, 100, 200],
+                        "max_depth": [None, 2, 3, 6, 10, 15],
+                        "min_samples_split": [2, 4, 7, 10]
+                      }),
+    "svm_rbf": (SVC(),
+                {
+                    "C": [1e-2, 0.5e-1, 1e-1, 1, 1e1, 0.5e2, 1e2],
+                    "gamma": [0.1, 0.5, 1, 5, 10],
+                    "max_iter": [100, 300, 700, -1]
+                }),
     "bayes": (GaussianNB(),
               {
               "var_smoothing": [1e-9, 1e-8, 1e-7, 1e-6, 1e-5,
