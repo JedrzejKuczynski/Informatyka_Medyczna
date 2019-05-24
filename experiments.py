@@ -7,7 +7,6 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 
@@ -58,29 +57,34 @@ def main_experiment(X, y, clasifiers):
 
 clasifiers = {
     "kNN": (KNeighborsClassifier(),
-            {"weights": ['uniform', 'distance'],
-            "n_neighbors": [3, 5, 7, 10, 15, 20]}
-            ),
+            {
+            "weights": ['uniform', 'distance'],
+            "n_neighbors": [3, 5, 7, 10, 15, 20]
+            }),
     # "Random Forest": (),
     "bayes": (GaussianNB(),
-              {"var_smoothing": [1e-9, 1e-8, 1e-7, 1e-6, 1e-5,
-                                 1e-4, 1e-3, 1e-2, 1e-1]}
-              ),
-    "gaussian_process": (GaussianProcessClassifier(kernel=(1.0 * RBF(1.0)), random_state=42),
-                        {"n_restarts_optimizer": [0, 1, 2, 3, 4, 5],
-                        "max_iter_predict": [100, 200, 300, 400,
-                             500, 600, 700, 800]}
-                        ),
+              {
+              "var_smoothing": [1e-9, 1e-8, 1e-7, 1e-6, 1e-5,
+                                1e-4, 1e-3, 1e-2, 1e-1]
+              }),
+    "gaussian_process": (GaussianProcessClassifier(kernel=(1.0 * RBF(1.0)),
+                                                   random_state=42),
+                         {
+                          "n_restarts_optimizer": [0, 1, 2, 3, 4, 5],
+                          "max_iter_predict": [100, 200, 300, 400,
+                                               500, 600, 700, 800]
+                         }),
     "neural_net": (MLPClassifier(solver="lbfgs", random_state=42),
-                    {"hidden_layer_sizes": [(25,), (50,), (100,), (150,), (200,),
-                               (50, 25), (100, 50),
-                               (125, 75), (175, 125),
-                               (25, 15, 5), (50, 30, 15),
-                               (75, 45, 25), (100, 60, 35)],
+                   {
+                    "hidden_layer_sizes": [(25,), (50,), (100,), (150,), (200,),
+                                           (50, 25), (100, 50),
+                                           (125, 75), (175, 125),
+                                           (25, 15, 5), (50, 30, 15),
+                                           (75, 45, 25), (100, 60, 35)],
                     "activation": ["logistic", "tanh", "relu"],
                     "alpha": [0.001, 0.0001, 0.00001, 0.15, 0.3, 0.5, 0.7],
                     "max_iter": [100, 200, 300, 400, 500, 600, 700, 800]
-                    }),
+                   }),
 }
 
 features, targets = load_and_prepare_data("test.npz")
