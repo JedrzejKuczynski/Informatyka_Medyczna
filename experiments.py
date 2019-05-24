@@ -30,8 +30,8 @@ def load_and_prepare_data(filename):
     return features_all, targets
 
 
-def feature_selection(X, y, percentile):
-    feature_selection = SelectPercentile(percentile=75)
+def feature_selection(X, y, percent):
+    feature_selection = SelectPercentile(percentile=percent)
     X_selected = feature_selection.fit_transform(X, y)
     selected_features = feature_selection.get_support()
 
@@ -61,22 +61,23 @@ def main_experiment(X, y, clasifiers):
         search_results_df.to_csv(f"{key}_all_features.csv", index=False)
 
         for key_param, value_param in best_params.items():
-            l = []
-            l.append(value_param)
-            best_params[key_param] = l
+            value_list = []
+            value_list.append(value_param)
+            best_params[key_param] = value_list
 
         # Feature Selection
         percentiles = [70, 50, 30]
         for percentile in percentiles:
             X, selected = feature_selection(X, y, percentile)
             search = GridSearchCV(clf, best_params, scoring="accuracy",
-                                   cv=3, iid=False)
+                                  cv=3, iid=False)
             search.fit(X, y)
             best_score = search.best_score_
             print(f"{percentile}% features")
             print(best_score, selected)
 
-            search_results_df.to_csv(f"{key}_{percentile}_features.csv", index=False)
+            search_results_df.to_csv(f"{key}_{percentile}_features.csv",
+                                     index=False)
 
 
 clasifiers = {
@@ -105,9 +106,7 @@ clasifiers = {
     "gaussian_process": (GaussianProcessClassifier(kernel=(1.0 * RBF(1.0)),
                                                    random_state=42),
                          {
-                          "n_restarts_optimizer": [0, 1, 2, 3, 4, 5],
-                          "max_iter_predict": [100, 200, 300, 400,
-                                               500, 600, 700, 800]
+                          "n_restarts_optimizer": [0, 1, 2, 3, 4]
                          }),
     "neural_net": (MLPClassifier(solver="lbfgs", random_state=42),
                    {
@@ -123,8 +122,4 @@ clasifiers = {
 }
 
 features, targets = load_and_prepare_data("test.npz")
-# neural_net_experiments(features, targets)
-# naive_bayes_experiments(features, targets)
-# gaussian_process_experiments(features, targets)
-
 main_experiment(features, targets, clasifiers)
