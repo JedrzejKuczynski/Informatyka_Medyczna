@@ -47,11 +47,10 @@ def main_experiment(X, y, clasifiers):
         param_grid = value[1]
 
         grid_search = GridSearchCV(clf, param_grid, scoring="accuracy",
-                                   cv=3, iid=False)
+                                   cv=3, iid=False, n_jobs=-1)
         grid_search.fit(X, y)
 
         search_results_df = pd.DataFrame.from_dict(grid_search.cv_results_)
-        best_estimator = grid_search.best_estimator_
         best_score = grid_search.best_score_
         best_params = grid_search.best_params_
 
