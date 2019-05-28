@@ -39,10 +39,12 @@ def feature_selection(X, y, percent):
     return X_selected, selected_features
 
 
+def draw_plots(filename, x_axis, y_axis):
+    return
+
+
 def main_experiment(X, y, clasifiers):
     for key, value in clasifiers.items():
-        # if key != "bayes":
-        #    continue
         clf = value[0]
         param_grid = value[1]
 
@@ -75,8 +77,10 @@ def main_experiment(X, y, clasifiers):
             print(f"{percentile}% features")
             print(best_score, selected)
 
-            search_results_df.to_csv(f"{key}_{percentile}_features.csv",
-                                     index=False)
+            percentile_results_df = pd.DataFrame.from_dict(search.cv_results_)
+            percentile_results_df.to_csv(f"{key}_{percentile}_features.csv",
+                                         index=False)
+            np.savetxt(f"{key}_{percentile}_selected_features.txt", selected)
 
 
 clasifiers = {
