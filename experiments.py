@@ -39,7 +39,25 @@ def feature_selection(X, y, percent):
     return X_selected, selected_features
 
 
-def draw_plots(filename, x_axis, y_axis):
+def draw_plots(classifier, x_axis, y_axis, **kwargs):
+    filepath_all = f"Wyniki/{classifier}_all_features.csv"
+    data_all_df = pd.read_csv(filepath_all)
+    expressions = []
+
+    for key, value in kwargs.items():
+        if isinstance(value, tuple):
+            bool_expression = f"(data_all_df[r'{key}']==r'{value}')"
+        else:
+            bool_expression = f"(data_all_df[r'{key}']=={value})"
+        expressions.append(bool_expression)
+
+    bool_expression = " & ".join(expressions)
+
+    data_subset = data_all_df.loc[pd.eval(bool_expression,
+                                          global_dict=locals(),
+                                          local_dict=kwargs)]
+    print(data_subset.head())
+
     return
 
 
@@ -113,8 +131,8 @@ clasifiers = {
                          }),
     "neural_net": (MLPClassifier(solver="lbfgs", random_state=42),
                    {
-                    "hidden_layer_sizes": [(25,), (50,), (100,), (150,), (200,),
-                                           (50, 25), (100, 50),
+                    "hidden_layer_sizes": [(25,), (50,), (100,), (150,),
+                                           (200,), (50, 25), (100, 50),
                                            (125, 75), (175, 125),
                                            (25, 15, 5), (50, 30, 15),
                                            (75, 45, 25), (100, 60, 35)],
@@ -125,4 +143,7 @@ clasifiers = {
 }
 
 features, targets = load_and_prepare_data("test.npz")
-main_experiment(features, targets, clasifiers)
+# main_experiment(features, targets, clasifiers)
+draw_plots("neural_net", "param_activation", "mean_test_score",
+           param_alpha=0.5, param_max_iter=100,
+           param_hidden_layer_sizes=(100,))
