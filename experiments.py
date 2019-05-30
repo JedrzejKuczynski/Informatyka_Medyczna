@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.feature_selection import SelectPercentile
@@ -10,6 +11,9 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
+
+
+PERCENTILES = [70, 50, 30]
 
 
 def load_and_prepare_data(filename):
@@ -53,10 +57,32 @@ def draw_plots(classifier, x_axis, y_axis, **kwargs):
 
     bool_expression = " & ".join(expressions)
 
-    data_subset = data_all_df.loc[pd.eval(bool_expression,
-                                          global_dict=locals(),
-                                          local_dict=kwargs)]
-    print(data_subset.head())
+    data_all_subset_df = data_all_df.loc[pd.eval(bool_expression,
+                                                 global_dict=locals(),
+                                                 local_dict=kwargs)]
+
+    data_all_subset_df.plot(x_axis, y_axis, title=classifier, grid=True,
+                            rot=45, legend=False)
+    plt.ylabel("Accuracy")
+    plt.show()
+
+    percentile_dataframes = []
+
+    for percentile in PERCENTILES:
+        filepath_percent = f"Wyniki/{classifier}_{percentile}_features.csv"
+        data_percentile_df = pd.read_csv(filepath_percent)
+        percentile_dataframes.append(data_percentile_df)
+
+    selected_features_df = pd.concat(percentile_dataframes, axis=0,
+                                     ignore_index=True)
+
+    plt.plot(PERCENTILES, selected_features_df[y_axis])
+    plt.title(classifier)
+    plt.xlabel("Procent cech wybranych do uczenia modelu")
+    plt.xticks(rotation=45)
+    plt.ylabel("Accuracy")
+    plt.grid()
+    plt.show()
 
     return
 
@@ -85,8 +111,7 @@ def main_experiment(X, y, clasifiers):
             best_params[key_param] = value_list
 
         # Feature Selection
-        percentiles = [70, 50, 30]
-        for percentile in percentiles:
+        for percentile in PERCENTILES:
             X_new, selected = feature_selection(X, y, percentile)
             search = GridSearchCV(clf, best_params, scoring="accuracy",
                                   cv=3, iid=False)
@@ -145,5 +170,5 @@ clasifiers = {
 features, targets = load_and_prepare_data("test.npz")
 # main_experiment(features, targets, clasifiers)
 draw_plots("neural_net", "param_activation", "mean_test_score",
-           param_alpha=0.5, param_max_iter=100,
+           param_alpha=0.001, param_max_iter=100,
            param_hidden_layer_sizes=(100,))
