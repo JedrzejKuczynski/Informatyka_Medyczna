@@ -49,7 +49,7 @@ def draw_plots(classifier, x_axis, y_axis, **kwargs):
     expressions = []
 
     for key, value in kwargs.items():
-        if isinstance(value, tuple):
+        if isinstance(value, tuple) or isinstance(value, str):
             bool_expression = f"(data_all_df[r'{key}']==r'{value}')"
         else:
             bool_expression = f"(data_all_df[r'{key}']=={value})"
@@ -57,13 +57,19 @@ def draw_plots(classifier, x_axis, y_axis, **kwargs):
 
     bool_expression = " & ".join(expressions)
 
-    data_all_subset_df = data_all_df.loc[pd.eval(bool_expression,
-                                                 global_dict=locals(),
-                                                 local_dict=kwargs)]
+    print("\n\n", bool_expression, "\n\n")
+
+    if bool_expression:
+        data_all_subset_df = data_all_df.loc[pd.eval(bool_expression,
+                                                     global_dict=locals(),
+                                                     local_dict=kwargs)]
+    else:
+        data_all_subset_df = data_all_df
 
     data_all_subset_df.plot(x_axis, y_axis, title=classifier, grid=True,
                             rot=45, legend=False)
     plt.ylabel("Accuracy")
+    plt.savefig(f"Wykresy/{classifier}_{x_axis}_plot2.png")
     plt.show()
 
     percentile_dataframes = []
@@ -82,6 +88,7 @@ def draw_plots(classifier, x_axis, y_axis, **kwargs):
     plt.xticks(rotation=45)
     plt.ylabel("Accuracy")
     plt.grid()
+    plt.savefig(f"Wykresy/{classifier}_{x_axis}_selected_features_plot2.png")
     plt.show()
 
     return
@@ -169,6 +176,6 @@ clasifiers = {
 
 features, targets = load_and_prepare_data("test.npz")
 # main_experiment(features, targets, clasifiers)
-draw_plots("neural_net", "param_activation", "mean_test_score",
-           param_alpha=0.001, param_max_iter=100,
-           param_hidden_layer_sizes=(100,))
+draw_plots("neural_net", "param_hidden_layer_sizes", "mean_test_score",
+           param_alpha=0.15, param_activation="tanh",
+           param_max_iter=300)
