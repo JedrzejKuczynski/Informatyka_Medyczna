@@ -4,6 +4,7 @@ import numpy as np
 import os
 from sklearn.externals import joblib
 from skimage import color, io, measure, morphology
+from sklearn.preprocessing import StandardScaler
 
 
 parser = argparse.ArgumentParser(description="Skrypt obliczający \
@@ -184,6 +185,8 @@ def extract_features(folderpath):
 
 
 features = extract_features(args.folderpath)
+features = StandardScaler().fit_transform(features)
+
 clf = joblib.load("Markowska_Kuczyński_classifier.pkl")
 predictions = clf.predict(features)
 print(predictions)
