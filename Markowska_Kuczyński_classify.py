@@ -184,8 +184,6 @@ def extract_features(folderpath):
 
 
 features = extract_features(args.folderpath)
-print(features)
-print(features[0])
 clf = joblib.load("Markowska_Kuczyński_classifier.pkl")
-predictions = clf.predict(features[0])
+predictions = clf.predict(features)
 print(predictions)
