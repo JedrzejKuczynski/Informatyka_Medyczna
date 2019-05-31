@@ -124,6 +124,8 @@ def draw_contour(leaf_img, contour):
 
 def extract_features(folderpath):
     features_all = []
+    filenames = []
+
     threshold = 0.7  # Granica do progowania obrazu
 
     for filename in os.listdir(folderpath):
@@ -180,13 +182,17 @@ def extract_features(folderpath):
                                         subleaves_number])
             features_species = np.concatenate((features_species, hist, hu))
             features_all.append(features_species)
+            filenames.append(filename)
 
-    return features_all
-
-
-features = extract_features(args.folderpath)
-features = StandardScaler().fit_transform(features)
+    features_all = StandardScaler().fit_transform(features_all)
+    return features_all, filenames
 
 clf = joblib.load("Markowska_Kuczyński_classifier.pkl")
+features, filenames = extract_features(args.folderpath)
+
+
 predictions = clf.predict(features)
-print(predictions)
+
+for filename, prediction in zip(filenames, predictions):
+    print(filename, prediction)
+    
