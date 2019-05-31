@@ -67,7 +67,7 @@ def draw_plots(classifier, x_axis, y_axis, **kwargs):
         data_all_subset_df = data_all_df
 
     data_all_subset_df.plot(x_axis, y_axis, title=classifier, grid=True,
-                            rot=45, legend=False)
+                            legend=False)
     plt.ylabel("Accuracy")
     plt.savefig(f"Wykresy/{classifier}_{x_axis}_plot2.png")
     plt.show()
@@ -85,7 +85,6 @@ def draw_plots(classifier, x_axis, y_axis, **kwargs):
     plt.plot(PERCENTILES, selected_features_df[y_axis])
     plt.title(classifier)
     plt.xlabel("Procent cech wybranych do uczenia modelu")
-    plt.xticks(rotation=45)
     plt.ylabel("Accuracy")
     plt.grid()
     plt.savefig(f"Wykresy/{classifier}_{x_axis}_selected_features_plot2.png")
@@ -176,6 +175,5 @@ clasifiers = {
 
 features, targets = load_and_prepare_data("test.npz")
 # main_experiment(features, targets, clasifiers)
-draw_plots("neural_net", "param_hidden_layer_sizes", "mean_test_score",
-           param_alpha=0.15, param_activation="tanh",
-           param_max_iter=300)
+draw_plots("svm_rbf", "param_C", "mean_test_score",
+           param_gamma=0.5, param_max_iter=300)

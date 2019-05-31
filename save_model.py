@@ -51,7 +51,7 @@ clf = RandomForestClassifier()
 clf2 = MLPClassifier()
 clf3 = KNeighborsClassifier()
 grid_search = GridSearchCV(clf3, param_grid3, scoring="accuracy",
-                           cv=3, iid=False, n_jobs=-1)
+                           cv=3, iid=False)
 grid_search.fit(features, targets)
 best_estimator = grid_search.best_estimator_
 joblib.dump(best_estimator, "Markowska_Kuczyński_classifier.pkl")
