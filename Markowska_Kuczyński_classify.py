@@ -7,6 +7,7 @@ from sklearn.externals import joblib
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from skimage import color, io, measure, morphology
+from sklearn.preprocessing import StandardScaler
 
 
 parser = argparse.ArgumentParser(description="Skrypt obliczający \
@@ -144,6 +145,8 @@ def draw_contour(leaf_img, contour):
 
 def extract_features(folderpath):
     features_all = []
+    filenames = []
+
     threshold = 0.7  # Granica do progowania obrazu
 
     for filename in os.listdir(folderpath):
@@ -200,25 +203,17 @@ def extract_features(folderpath):
                                         subleaves_number])
             features_species = np.concatenate((features_species, hist, hu))
             features_all.append(features_species)
+            filenames.append(filename)
 
-    return features_all
+    features_all = StandardScaler().fit_transform(features_all)
+    return features_all, filenames
+
+clf = joblib.load("Markowska_Kuczyński_classifier.pkl")
+features, filenames = extract_features(args.folderpath)
 
 
-features_train, targets_train = load_and_prepare_data("test.npz")
+predictions = clf.predict(features)
 
-param_grid = {
-              "max_depth": [15],
-              "min_samples_split": [2],
-              "n_estimators": [200]
-             }
-
-clf = RandomForestClassifier()
-grid_search = GridSearchCV(clf, param_grid, scoring="accuracy",
-                           cv=3, iid=False)
-grid_search.fit(features_train, targets_train)
-best_estimator = grid_search.best_estimator_
-
-features = extract_features(args.folderpath)
-# clf = joblib.load("Markowska_Kuczyński_classifier.pkl")
-predictions = best_estimator.predict(features)
-print(predictions)
+for filename, prediction in zip(filenames, predictions):
+    print(filename, prediction)
+    
