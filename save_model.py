@@ -1,9 +1,7 @@
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import GridSearchCV
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.externals import joblib
 
 
@@ -33,24 +31,8 @@ param_grid = {
               "n_estimators": [200]
              }
 
-param_grid2 = {
-               "activation": ["tanh"],
-               "alpha": [0.15],
-               "hidden_layer_sizes": [(100, 50)],
-               "max_iter": [100]
-              }
-
-{'n_neighbors': 3, 'weights': 'distance'}
-
-param_grid3 = {
-               "n_neighbors": [3],
-               "weights": ["distance"]
-              }
-
 clf = RandomForestClassifier()
-clf2 = MLPClassifier()
-clf3 = KNeighborsClassifier()
-grid_search = GridSearchCV(clf3, param_grid3, scoring="accuracy",
+grid_search = GridSearchCV(clf, param_grid, scoring="accuracy",
                            cv=3, iid=False)
 grid_search.fit(features, targets)
 best_estimator = grid_search.best_estimator_
