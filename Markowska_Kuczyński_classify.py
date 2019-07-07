@@ -187,6 +187,7 @@ def extract_features(folderpath):
     features_all = StandardScaler().fit_transform(features_all)
     return features_all, filenames
 
+
 clf = joblib.load("Markowska_Kuczyński_classifier.pkl")
 features, filenames = extract_features(args.folderpath)
 
@@ -195,4 +196,3 @@ predictions = clf.predict(features)
 
 for filename, prediction in zip(filenames, predictions):
     print(filename, prediction)
-    

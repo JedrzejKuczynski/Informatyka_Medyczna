@@ -29,7 +29,10 @@ def load_and_prepare_data(filename):
     features_all = np.array(features_all)
     targets = np.array(targets)
 
-    features_all = StandardScaler().fit_transform(features_all)
+    scaler = StandardScaler()
+    features_all = scaler.fit_transform(features_all)
+    print(scaler.mean_) # testy
+    print(scaler.scale_) # testy
 
     return features_all, targets
 
@@ -175,5 +178,5 @@ clasifiers = {
 
 features, targets = load_and_prepare_data("test.npz")
 # main_experiment(features, targets, clasifiers)
-draw_plots("svm_rbf", "param_C", "mean_test_score",
-           param_gamma=0.5, param_max_iter=300)
+# draw_plots("svm_rbf", "param_C", "mean_test_score",
+#          param_gamma=0.5, param_max_iter=300)

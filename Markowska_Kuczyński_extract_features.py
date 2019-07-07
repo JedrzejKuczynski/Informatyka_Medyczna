@@ -184,5 +184,6 @@ for root, dirs, files in os.walk(args.path, topdown=False):
                                         subleaves_number])
             features_species = np.concatenate((features_species, hist, hu))
             features_all[species].append(features_species)
+    print()
 
 np.savez(args.outfile, **features_all)
