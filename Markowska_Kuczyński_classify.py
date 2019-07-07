@@ -2,7 +2,10 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import StandardScaler
 from skimage import color, io, measure, morphology
 from sklearn.preprocessing import StandardScaler
 
@@ -14,6 +17,24 @@ poprzednio nauczonego modelu.")
 parser.add_argument("folderpath", help="Ścieżka do katalogu z obrazkami \
 w formacie jpg")
 args = parser.parse_args()
+
+
+def load_and_prepare_data(filename):
+    data = np.load(filename, allow_pickle=True)
+    features_all = []
+    targets = []
+
+    for label in data.files:
+        for features in data[label]:
+            features_all.append(features)
+            targets.append(label)
+
+    features_all = np.array(features_all)
+    targets = np.array(targets)
+
+    features_all = StandardScaler().fit_transform(features_all)
+
+    return features_all, targets
 
 
 def threshold_and_label(file, threshold):
@@ -190,7 +211,6 @@ def extract_features(folderpath):
 
 clf = joblib.load("Markowska_Kuczyński_classifier.pkl")
 features, filenames = extract_features(args.folderpath)
-
 
 predictions = clf.predict(features)
 
